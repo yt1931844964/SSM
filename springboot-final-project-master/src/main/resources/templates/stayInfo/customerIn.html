@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎页面-X-admin2.2</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="stylesheet" href="../../css/font.css">
+    <link rel="stylesheet" href="../../css/xadmin.css">
+    <script type="text/javascript" src="../../lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="../../js/xadmin.js"></script>
+    <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+    <!--[if lt IE 9]>
+    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        .layui-table-body {
+            overflow-x: hidden;
+        }
+
+    </style>
+</head>
+<body>
+<div class="x-nav">
+            <span class="layui-breadcrumb">
+                <a href="">首页</a>
+                <a href="">演示</a>
+                <a>
+                    <cite>导航元素</cite></a>
+            </span>
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right"
+       onclick="location.reload()" title="刷新">
+        <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+    </a>
+</div>
+<div class="layui-fluid">
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <form class="layui-form">
+                <div class="layui-form-item layui-inline">
+                    <label for="L_input2" class="layui-form-label">
+                        身份证号</label>
+                    <div class="layui-input-inline">
+                        <input type="text" id="L_input2" name="identityNum" lay-verify="identity"
+                               autocomplete="off" class="layui-input"></div>
+                </div>
+                <div class="layui-form-item layui-inline">
+                    <button class="layui-btn layui-btn-normal" lay-filter="select" lay-submit="">搜索</button>
+                </div>
+            </form>
+            <div class="layui-col-md12 layui-inline" style="font-size: 14px">
+                <div class="layui-col-md3">
+                    客户编号:&nbsp;&nbsp; <span id="cid"></span>
+                </div>
+                <div class="layui-col-md3">
+                    客户姓名:&nbsp;&nbsp;<span id="cname"></span>
+                </div>
+                <div class="layui-col-md6">
+                    客户身份证号:<span id="identityNum"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-col-md6">
+            <span style="font-size: 20px">房间：</span>
+            <div style="font-size: large" class="layui-inline" id="romIds">
+
+            </div>
+            <div class="layui-col-md-offset4">
+                <button class="layui-btn layui-btn-normal">入住所有</button>
+            </div>
+        </div>
+    </div>
+    <div class="layui-row">
+        <table class="layui-table" id="table" lay-filter="test">
+            <script type="text/html" id="barDemo">
+                {{# if (d.state == 0){ }}
+                <a class="layui-btn layui-btn-xs " lay-event="in">入住</a>
+                {{# } }}
+            </script>
+        </table>
+        <script type="text/html" id="toolbarDemo">
+            条件搜索：
+            <div class="layui-inline">
+                <select id="condition" name="condition" lay-verify="required">
+                    <option value="rnum">房间号</option>
+                    <option value="rname">客房名(模糊查询)</option>
+                    <option value="tid">客房类型</option>
+                </select>
+            </div>
+            <div class="layui-inline">
+                <input class="layui-input" id="conditionValue" autocomplete="off">
+            </div>
+            <div class="layui-inline">
+                <input type="checkbox" class="layui-input" id="showUseAble"
+                       title="只显示空房" name="state" checked>
+            </div>
+            <button class="layui-btn layui-bg-blue" data-type="reload" lay-event="searchRom">搜索</button>
+            <button class="layui-btn layui-btn-normal" data-type="reload" lay-event="addAll">添加选中</button>
+        </script>
+    </div>
+</div>
+<script>
+    layui.use(['form', 'layer', 'jquery', 'table'],
+        function () {
+            $ = layui.jquery;
+            let form = layui.form,
+                layer = layui.layer,
+                table = layui.table;
+
+            // 动态添加房间标签函数
+            function addRom(rid) {
+                let $divRid = $("#romIds>div[name=" + rid + "]");
+
+                if ($divRid.length !== 0) return;
+                let romIds = $("#romIds");
+
+                let div = '<div class="layui-inline aa" name="' + rid + '">' + rid +
+                    '<i class="layui-icon layui-icon-delete"></i></div>';
+                romIds.append(div);
+
+                $("#romIds>div[name=" + rid + "]>i").bind("click", function () {
+                    $(this).parent().remove();
+                });
+            }
+
+            //监听提交
+            form.on('submit(select)',
+                function (data) {
+                    $.ajax({
+                        url: '/customer/select/' + data.field.identityNum,
+                        success: function (data) {
+                            if (data.code === -1) {
+                                layer.confirm("未找到用户！点击确定前往客户管理界面", function (index) {
+                                    layer.close(index);
+                                    parent.xadmin.add_tab("客户管理", "/customer/list");
+                                });
+                            } else {
+                                let customer = data.data;
+                                $("#cid").html(customer.cid);
+                                $("#cname").html(customer.cname);
+                                $("#identityNum").html(customer.identityNum);
+                                layer.msg("找到用户！请选择房间", {icon: 6, time: 800});
+                            }
+                        }
+                    })
+                    return false;
+                });
+
+            let tableIns = table.render({
+                elem: '#table'
+                , url: '/rom/pageData'
+                , toolbar: '#toolbarDemo'
+                , where: {"state": 0}
+                , id: 'test'
+                , cols: [
+                    [
+                        {type: 'checkbox'},
+                        {field: 'rid', title: '客房编号', width: '10%', sort: true},
+                        {field: 'rnum', title: '房间号', width: '10%'},
+                        {field: 'rname', title: '房间名', width: '10%'},
+                        {
+                            title: '房间类型', width: '20%', templet: function (d) {
+                                return "<div>" + d.romType.tname + "</div>"
+                            }
+                        },
+                        {
+                            title: '单价', width: '10%', templet: function (d) {
+                                return "<div>" + d.romType.price + "</div>"
+                            }
+                        },
+                        {
+                            field: 'state', title: '状态', width: '10%', templet: function (d) {
+                                if (d.state == 0)
+                                    return "<span class='layui-btn layui-btn-warm  layui-btn-radius'>" +
+                                        "未住</span>";
+                                else if (d.state == 1)
+                                    return "<span class='layui-btn layui-btn-normal layui-btn-radius'>" +
+                                        "在住</span>";
+                                else
+                                    return "<span class='layui-btn layui-btn-danger layui-btn-radius'>" +
+                                        "维护中</span>";
+                            }
+                        },
+                        {field: 'right', title: '操作', align: 'center', toolbar: '#barDemo'}
+                    ]
+                ]
+                , page: true
+                , page: {theme: '#2F88FF'}
+                , limits: [5, 8, 10]
+                , limit: 8
+                , request: {
+                    pageName: 'pageNum', //页码的参数名称，默认：page
+                    limitName: 'pageSize' //每页数据量的参数名，默认：limit
+                },
+            });
+
+            //头工具栏事件
+            table.on('toolbar(test)', function (obj) {
+
+                let checkStatus = table.checkStatus(obj.config.id);
+                let data = checkStatus.data;
+
+                switch (obj.event) {
+                    case 'searchRom':
+                        let conditionValue = $('#conditionValue').val();
+                        let condition = $('#condition').val();
+                        let s;
+                        let showUseAble = $("#showUseAble").prop("checked");
+                        if (showUseAble) {
+                            s = {[condition]: conditionValue, "state": 0};
+                        } else {
+                            s = {[condition]: conditionValue};
+                        }
+                        // 进行搜索，重新渲染（可以修改url）
+                        tableIns.reload({
+                            url: '/rom/pageData'
+                            , where: s
+                            , page: {
+                                curr: 1 //重新从第 1 页开始
+                            }
+                        });
+                        // 保存搜索条件
+                        $('#condition').val(condition);
+                        $('#conditionValue').val(conditionValue);
+                        $("#showUseAble").prop("checked", showUseAble);
+                        break;
+
+                    case 'addAll':
+                        if (data.length === 0) {
+                            layer.msg("请先勾选数据！");
+
+                        } else {
+                            for (let i = 0; i < data.length; i++) {
+                                addRom(data[i].rid);
+                            }
+                        }
+                        break;
+                }
+            });
+
+            // 侧边工具栏事件
+            table.on(('tool(test)'), function (obj) {
+                let data1 = obj.data;
+                let tr = obj.tr;
+                switch (obj.event) {
+                    case 'in':
+                        layer.confirm("确定要入住该房间吗？", function (index) {
+                            layer.close(index);
+                            let cid = $("#cid").html();
+                            if (cid === null || "" === cid) {
+                                layer.msg("请先搜索客户！");
+                                return;
+                            }
+                            let rid = data1.rid;
+
+                            $.ajax({
+                                url: "/stayInfo/in",
+                                data: {"cid": cid, "rid": rid},
+                                method: "POST",
+                                success: function (data) {
+                                    layer.msg(data.msg);
+                                }
+                            });
+
+                        });
+                }
+            })
+        });
+</script>
+</body>
+</html>

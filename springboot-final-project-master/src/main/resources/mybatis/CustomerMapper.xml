@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtds.mapper.CustomerMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.qtds.entity.Customer">
+        <id column="cid" property="cid" />
+        <result column="cname" property="cname" />
+        <result column="identity_num" property="identityNum" />
+        <result column="tel_phone" property="telPhone" />
+        <result column="state" property="state" />
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        cid, cname, identity_num, tel_phone, state, deleted
+    </sql>
+    <update id="updateStateByCid">
+        update customer
+        set state = #{state,jdbcType=NUMERIC}
+        where cid = #{cid,jdbcType=NUMERIC}
+    </update>
+
+</mapper>

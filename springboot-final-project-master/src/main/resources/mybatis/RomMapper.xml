@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtds.mapper.RomMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.qtds.entity.Rom">
+        <id column="rid" property="rid"/>
+        <result column="rnum" property="rnum"/>
+        <result column="rname" property="rname"/>
+        <result column="tid" property="tid"/>
+        <result column="state" property="state"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        rid, rnum, rname, tid, state, deleted
+    </sql>
+
+    <resultMap id="romMap" type="com.qtds.entity.Rom" extends="BaseResultMap">
+        <association property="romType" javaType="com.qtds.entity.RomType">
+            <id column="tid" property="tid"/>
+            <result column="tname" property="tname"/>
+            <result column="price" property="price"/>
+            <result column="deleted" property="deleted"/>
+        </association>
+    </resultMap>
+
+    <select id="findByIdWithType" parameterType="int" resultMap="romMap">
+        select *
+        from rom r
+                 left join rom_type rt on rt.tid = r.tid
+        where rid = #{id}
+          and r.deleted = 0
+          and rt.deleted = 0
+    </select>
+    <select id="findPage" resultMap="romMap">
+        select *
+        from rom r
+        left join rom_type rt on rt.tid = r.tid
+        <where>
+            <if test="rom.rid!=null">
+                and r.rid=#{rom.rid}
+            </if>
+            <if test="rom.rnum!=null">
+                and r.rnum=#{rom.rnum}
+            </if>
+            <if test="rom.rname!=null">
+                and r.rname like concat('%',#{rom.rname},'%')
+            </if>
+            <if test="rom.tid!=null">
+                and r.tid=#{rom.tid}
+            </if>
+            <if test="rom.state!=null">
+                and r.state=#{rom.state}
+            </if>
+            and r.deleted = 0
+            and rt.deleted = 0
+        </where>
+
+    </select>
+    <update id="updateStateByRid">
+        update rom
+        set state = #{state,jdbcType=NUMERIC}
+        where rid = #{rid,jdbcType=NUMERIC}
+    </update>
+</mapper>
